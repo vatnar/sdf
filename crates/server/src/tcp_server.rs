@@ -1,5 +1,6 @@
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
+use std::os::linux::net::TcpStreamExt;
 use std::thread;
 
 pub struct TcpServer{
