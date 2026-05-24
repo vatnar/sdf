@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use sdf_server::{ServerError, TcpServer};
+use sdf_server::{Server, ServerError};
 
 #[derive(Parser)]
 struct Cli {
@@ -22,7 +22,7 @@ fn main() {
 fn run() -> Result<(), ServerError> {
     let cli = Cli::parse();
 
-    let server = TcpServer::new(cli.port, cli.dir)?;
+    let server = Server::new(cli.port, cli.dir)?;
 
     server.start_server()?;
     Ok(())

@@ -1,5 +1,5 @@
 mod error;
-mod tcp_server;
+mod server;
 
 pub use error::ServerError;
-pub use tcp_server::TcpServer;
+pub use server::Server;

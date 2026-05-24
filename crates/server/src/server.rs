@@ -11,12 +11,12 @@ use std::path::{Component, Path, PathBuf};
 use std::thread;
 use std::{fs, io};
 
-pub struct TcpServer {
+pub struct Server {
     port: u16,
     root: PathBuf,
 }
 
-impl TcpServer {
+impl Server {
     pub fn new(port: u16, root: impl Into<PathBuf>) -> Result<Self, ServerError> {
         let root = root.into().canonicalize()?;
 
