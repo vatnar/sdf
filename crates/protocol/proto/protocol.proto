@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package protocol;
+
+// --- Client -> Server ---
+
+message DownloadRequest {
+    string path = 1;
+}
+
+message UploadRequest {
+    string path = 1;
+    uint64 file_size = 2;
+}
+
+message ListRequest {
+    string path = 1;
+}
+
+message Request {
+    oneof command {
+        DownloadRequest download = 1;
+        UploadRequest upload = 2;
+        ListRequest list = 3;
+        FileChunk file_chunk = 4;
+    }
+}
+
+// --- Server -> Client ---
+
+message Error {
+    string message = 1;
+    int32 code = 2;
+}
+
+message FileChunk {
+    bytes data = 1;
+    bool is_last = 2;
+}
+
+message FileInfo {
+    string name = 1;
+    uint64 size = 2;
+    bool is_directory = 3;
+}
+
+message ListResponse {
+    repeated FileInfo entries = 1;
+}
+
+message Response {
+    oneof payload {
+        Error error = 1;
+        FileChunk file_chunk = 2;
+        ListResponse list = 3;
+        bool ok = 4;
+    }
+}

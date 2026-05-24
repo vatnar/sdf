@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 sdf-protocol = {path = "../protocol"}
+clap = { version = "4.6.1", features = ["derive", "env"] }
+thiserror = "1"

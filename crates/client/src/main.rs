@@ -1,11 +1,9 @@
-use sdf::UnconnectedTcpClient;
-use std::io::{BufRead, BufReader, Write};
 use std::net::SocketAddr;
-use std::thread::sleep;
+use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
+use sdf::Client;
 
 #[derive(Parser)]
 struct Cli {
@@ -15,26 +13,24 @@ struct Cli {
     #[arg(short, long)]
     verbose: bool,
 
-    #[arg(short, long, env = "FS_PEER")]
+    #[arg(
+        short,
+        long,
+        env = "FS_PEER",
+        global = true,
+        default_value = "127.0.0.1"
+    )]
     address: std::net::IpAddr,
 
-    #[arg(short, long, env = "FS_PORT")]
+    #[arg(short, long, env = "FS_PORT", global = true, default_value = "9000")]
     port: u16,
 }
 
 #[derive(Subcommand)]
 enum Commands {
-    Download{
-        path: PathBuf,
-        local_path: PathBuf,
-    },
-    Upload{
-        path: PathBuf,
-        local_path: PathBuf,
-    },
-    List {
-        path: Option<PathBuf>,
-    },
+    Download { path: PathBuf, local_path: PathBuf },
+    Upload { path: PathBuf, local_path: PathBuf },
+    List { path: Option<PathBuf> },
 }
 
 fn main() -> Result<()> {
@@ -45,42 +41,23 @@ fn main() -> Result<()> {
         .parse()
         .with_context(|| format!("invalid peer address: {peer}"))?;
 
+    let mut client = Client::connect(addr)?;
 
     match cli.command {
         Commands::Download { path, local_path } => {
-            println!("download {:?} -> {:?}", path, local_path)
+            sdf::commands::download(&mut client, &path.to_string_lossy(), &local_path)?;
         }
-        Commands::Upload { path, local_path} => {
-            println!("upload {:?} -> {:?}", local_path, path)
+        Commands::Upload { path, local_path } => {
+            sdf::commands::upload(&mut client, &local_path, &path.to_string_lossy())?;
         }
-        Commands::List { path} => {
-            println!("list {:?}", path)
+        Commands::List { path } => {
+            let path = path
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|| "/".to_string());
+            sdf::commands::list(&mut client, &path)?;
         }
     }
 
-
-    let client = UnconnectedTcpClient::new(addr);
-    let mut client = client.connect()?;
-
-    // TODO: Send command to server
-
-    // PLAN: only support absolute paths, (which actually are relative to the sdf-server root), (to support multiple sdf-servers on one host etc).
-    // TODO: Wait for response and handle it
-    // TODO: Close
-
-    client
-        .stream
-        .write_all(b"Hello, server!\n How are you?\n")?;
-
-    let mut reader = BufReader::new(client.stream.try_clone()?);
-    let mut line = String::new();
-
-    sleep(std::time::Duration::from_millis(500));
-    reader.read_line(&mut line)?;
-    println!("got: {:?}", line);
-
-    if client.disconnect().is_ok() {
-        println!("client disconnected");
-    }
+    client.disconnect()?;
     Ok(())
 }
